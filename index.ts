@@ -101,33 +101,24 @@ function getLiquidAirBorneQuantity({
   dikedArea,
 }: ProcessVariables): number {
   const L = getLiquidReleaseRate(diameter, density, P_g, height);
-
-  console.log("L", L);
-
-  const w_T = Math.min(L * MAX_RELEASE_TIME, inventory);
   const F_v = getFlashFraction(heatCapacityToLatentHeatRatio, T, T_b);
-  console.log("F_v", F_v);
-
   if (F_v >= 0.2) {
     return L;
   }
 
-  const AQ_f = 5 * F_v * L;
-
-  console.log("AQ_f", AQ_f);
-
-  const Wp = getPoolSize(F_v, w_T);
+  const w_T = Math.min(L * MAX_RELEASE_TIME, inventory);
+  const Wp = getPoolQuantity(F_v, w_T);
+  const AQ_f = getFlashAirBorneQuantity(F_v, L);
   const A_p = dikedArea ?? getPoolArea(Wp, density);
-  console.log("A_p", A_p);
-
   const T_char = Math.min(T_b, Math.max(T, T_a));
-
-  console.log("T_char", T_char);
-
   const AQ_p =
     (9.0 * 1e-4 * Math.pow(A_p, 0.95) * (mw * P_v)) / (T_char + KELVIN_OFFSET);
-  console.log("AQ_p", AQ_p);
+
   return Math.min(AQ_p + AQ_f, L);
+}
+
+function getFlashAirBorneQuantity(F_v: number, L: number) {
+  return 5 * F_v * L;
 }
 
 function getFlashFraction(
@@ -156,7 +147,7 @@ function getLiquidReleaseRate(
   );
 }
 
-function getPoolSize(F_v: number, w_T: number): number {
+function getPoolQuantity(F_v: number, w_T: number): number {
   return w_T * (1 - 5 * F_v);
 }
 
